@@ -1,6 +1,6 @@
 'use client';
 import {Canvas} from '@react-three/fiber';
-import {OrbitControls, Environment, ContactShadows} from '@react-three/drei';
+import {OrbitControls, ContactShadows} from '@react-three/drei';
 import {Suspense} from 'react';
 type Props={body:string;rim:string;seat:string;wheel:number;exhaust:string;mirror:boolean;filter:boolean};
 function Scooter({body,rim,seat,wheel,exhaust,mirror,filter}:Props){
@@ -24,4 +24,4 @@ function Scooter({body,rim,seat,wheel,exhaust,mirror,filter}:Props){
   {filter&&<mesh position={[-.15,.15,-.49]}><cylinderGeometry args={[.18,.18,.28,12]}/><meshStandardMaterial color="#b23840"/></mesh>}
  </group>;
 }
-export default function Motorcycle3D(props:Props){return <div className="canvas"><Canvas shadows camera={{position:[4,2.7,6],fov:44}} gl={{antialias:true}}><color attach="background" args={['#131f31']}/><ambientLight intensity={1.8}/><directionalLight position={[3,7,4]} intensity={2.8}/><Suspense fallback={null}><Scooter {...props}/><Environment preset="city"/><ContactShadows opacity={.42} scale={10} blur={2} far={5} position={[0,-.76,0]}/></Suspense><OrbitControls enablePan={false} enableZoom minDistance={3.1} maxDistance={12} minPolarAngle={.2} maxPolarAngle={Math.PI-.2}/></Canvas></div>}
+export default function Motorcycle3D(props:Props){return <div className="canvas"><Canvas shadows camera={{position:[4,2.7,6],fov:44}} gl={{antialias:true}}><color attach="background" args={['#131f31']}/><ambientLight intensity={1.8}/><directionalLight position={[3,7,4]} intensity={2.8}/><Suspense fallback={null}><Scooter {...props}/><directionalLight position={[-3,3,-4]} intensity={1.2}/><ContactShadows opacity={.42} scale={10} blur={2} far={5} position={[0,-.76,0]}/></Suspense><OrbitControls enablePan={false} enableZoom minDistance={3.1} maxDistance={12} minPolarAngle={.2} maxPolarAngle={Math.PI-.2}/></Canvas></div>}

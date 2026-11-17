@@ -1,36 +1,28 @@
-name: Build MOTO LAB ID APK
+name: Optional local Android project check
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '21'
+          java-version: '17'
       - uses: android-actions/setup-android@v3
-      - run: npm install
-      - run: npm run lint
-      - run: npm run build
-      - run: npx cap add android
-      - name: Enforce Android 11 minimum
-        run: |
-          sed -i 's/minSdkVersion = [0-9]*/minSdkVersion = 30/' android/variables.gradle
-          grep 'minSdkVersion = 30' android/variables.gradle
-      - run: npx cap sync android
-      - run: cd android && chmod +x gradlew && ./gradlew assembleDebug --no-daemon
+        with:
+          packages: platform-tools
+          log-accepted-android-sdk-licenses: false
+      - run: sdkmanager 'platforms;android-34' 'build-tools;34.0.0'
+      - name: Build bundled Android project without npm
+        working-directory: android-local
+        run: bash build-tablet.sh
       - uses: actions/upload-artifact@v4
         with:
           name: MOTO-LAB-ID-Android11
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: android-local/APK/
           if-no-files-found: error

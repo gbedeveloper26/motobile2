@@ -4,3 +4,8 @@ out
 android
 *.log
 .env*
+*.tsbuildinfo
+**/.gradle/
+**/build/
+**/local.properties
+**/APK/
