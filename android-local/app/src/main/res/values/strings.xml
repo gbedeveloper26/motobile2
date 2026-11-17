@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">MOTO LAB ID</string>
-    <string name="title_activity_main">MOTO LAB ID</string>
-    <string name="package_name">id.gbedeveloper.motobile2</string>
-    <string name="custom_url_scheme">id.gbedeveloper.motobile2</string>
-</resources>

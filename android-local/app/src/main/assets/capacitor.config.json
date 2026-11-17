@@ -1,8 +1,0 @@
-{
-	"appId": "id.gbedeveloper.motobile2",
-	"appName": "MOTO LAB ID",
-	"webDir": "out",
-	"android": {
-		"backgroundColor": "#090d14"
-	}
-}

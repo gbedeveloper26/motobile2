@@ -1,3 +1,0 @@
-rootProject.name = 'MOTO-LAB-ID-Android-Lokal'
-include ':app', ':capacitor-android'
-project(':capacitor-android').projectDir = new File('vendor/capacitor-android')
