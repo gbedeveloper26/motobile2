@@ -2,163 +2,117 @@ package id.gbedeveloper.motobile2
 
 import android.app.Activity
 import android.os.Bundle
-import android.content.Context
 import android.graphics.Color
+import android.graphics.PorterDuff
+import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
-import android.view.View
 import android.widget.*
+import android.view.View
 import org.json.JSONObject
 
-/** Tablet-focused studio layout inspired by the user-provided screenshot.
- * Renders one selected motorcycle at a time. BikeCanvas is an illustrative
- * placeholder until properly licensed model-specific 3D geometry is supplied.
- */
-class StudioActivity : Activity() {
- private val bg=Color.rgb(12,17,26)
- private val panel=Color.rgb(27,34,45)
- private val blue=Color.rgb(20,94,232)
- private val white=Color.rgb(240,244,250)
- private val muted=Color.rgb(172,184,201)
- private val models=listOf("BeAT Street 2019","BeAT Street 2020","BeAT Street 2026","BeAT 2024","Vario 125","Vario 160","Scoopy","PCX 160","NMAX","Aerox")
+/** Image based prototype. Replace drawable motorcycle_cutout with licensed, model-specific photo layers. */
+class StudioActivity:Activity() {
+ private val bikes=listOf("BeAT Street 2019","BeAT Street 2020","BeAT Street 2026","BeAT 2024","Vario 125","Vario 160","Scoopy","PCX 160","NMAX","Aerox")
  private val categories=listOf("Warna Body","Velg","Ban","Knalpot","Suspensi","Stiker","Jok","Spion","Filter Udara","Aksesoris","Swap Body")
- private val state=Config()
- private lateinit var bike:BikeCanvas
- private lateinit var details:LinearLayout
- private lateinit var editor:LinearLayout
- private lateinit var selectedLabel:TextView
- private lateinit var total:TextView
- private var currentCategory="Warna Body"
- private var before=false
- private fun text(s:String,sp:Float=14f,bold:Boolean=false,color:Int=white)=TextView(this).apply {
-  text=s;textSize=sp;setTextColor(color);setPadding(9,8,9,8)
-  if(bold)setTypeface(typeface,1)
- }
- private fun column():LinearLayout=LinearLayout(this).apply {orientation=LinearLayout.VERTICAL}
- private fun button(label:String,click:()->Unit):Button=Button(this).apply {
-  text=label;textSize=12f;isAllCaps=false;setTextColor(white);setBackgroundColor(panel)
-  setOnClickListener {click()}
- }
- private fun spinner(items:List<String>,selected:String,change:(String)->Unit):Spinner {
+ private val dark=Color.rgb(18,23,33);private val panel=Color.rgb(29,35,48);private val blue=Color.rgb(25,100,237)
+ private var bikeName=bikes[1];private var category="Warna Body";private var size=14
+ private var front="80/90-14";private var rear="90/90-14";private var body="Original";private var exhaust="Standar";private var mirror="Standar";private var filter="Standar";private var accessory="Tanpa aksesori";private var suspension="Standar";private var seat="Standar";private var sticker="Tanpa stiker";private var tint=Color.WHITE
+ private lateinit var image:ImageView;private lateinit var heading:TextView;private lateinit var settings:LinearLayout;private lateinit var summary:LinearLayout
+ private fun txt(t:String,sp:Float=14f,bold:Boolean=false)=TextView(this).apply { text=t;textSize=sp;setTextColor(Color.WHITE);setPadding(9,9,9,9);if(bold)typeface=Typeface.DEFAULT_BOLD }
+ private fun col()=LinearLayout(this).apply{orientation=LinearLayout.VERTICAL}
+ private fun row()=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL;gravity=Gravity.CENTER_VERTICAL}
+ private fun button(t:String,f:()->Unit)=Button(this).apply{text=t;textSize=12f;isAllCaps=false;setTextColor(Color.WHITE);background=GradientDrawable().apply{setColor(blue);cornerRadius=14f};setOnClickListener{f()}}
+ private fun choice(label:String,options:List<String>,value:String,onSelect:(String)->Unit){
+  settings.addView(txt(label,12f,true))
   val spinner=Spinner(this)
-  spinner.adapter=ArrayAdapter(this,android.R.layout.simple_spinner_dropdown_item,items)
-  spinner.setSelection(items.indexOf(selected).coerceAtLeast(0))
-  spinner.onItemSelectedListener=object:android.widget.AdapterView.OnItemSelectedListener {
+  spinner.adapter=ArrayAdapter(this,android.R.layout.simple_spinner_dropdown_item,options)
+  spinner.setSelection(options.indexOf(value).coerceAtLeast(0))
+  spinner.onItemSelectedListener=object:android.widget.AdapterView.OnItemSelectedListener{
    override fun onNothingSelected(parent:android.widget.AdapterView<*>?){}
-   override fun onItemSelected(parent:android.widget.AdapterView<*>?, view:View?,position:Int,id:Long) {change(items[position]);refresh()}
+   override fun onItemSelected(p:android.widget.AdapterView<*>?,v:View?,index:Int,id:Long){onSelect(options[index]);refresh()}
   }
-  return spinner
+  settings.addView(spinner)
  }
- private fun scroll(v:View):ScrollView=ScrollView(this).apply{addView(v)}
- private fun addField(label:String,items:List<String>,value:String,change:(String)->Unit) {
-  editor.addView(text(label,12f,false,muted))
-  editor.addView(spinner(items,value,change))
- }
- override fun onCreate(savedInstanceState:Bundle?) {
-  super.onCreate(savedInstanceState)
-  window.statusBarColor=bg;window.navigationBarColor=bg
-  getSharedPreferences("studio",Context.MODE_PRIVATE).getString("design",null)?.let {
-   try {val json=JSONObject(it);state.model=json.optString("model",state.model);state.front=json.optString("front",state.front);state.rear=json.optString("rear",state.rear);state.rim=json.optInt("rim",state.rim);state.body=json.optString("body",state.body);state.mirrors=json.optString("mirrors",state.mirrors);state.airFilter=json.optString("airFilter",state.airFilter);state.exhaust=json.optString("exhaust",state.exhaust);state.accessory=json.optString("accessory",state.accessory);state.color=json.optInt("color",state.color)}catch(_:Exception){}
+ override fun onCreate(saved:Bundle?){super.onCreate(saved)
+  window.statusBarColor=dark;window.navigationBarColor=dark
+  val prefs=getSharedPreferences("editor",MODE_PRIVATE)
+  prefs.getString("design",null)?.let{try{val j=JSONObject(it);bikeName=j.optString("bike",bikeName);size=j.optInt("size",size);front=j.optString("front",front);rear=j.optString("rear",rear);body=j.optString("body",body);exhaust=j.optString("exhaust",exhaust);mirror=j.optString("mirror",mirror);filter=j.optString("filter",filter);accessory=j.optString("accessory",accessory);tint=j.optInt("tint",tint)}catch(_:Exception){}}
+  val root=col().apply{setBackgroundColor(dark)}
+  val header=row().apply{setBackgroundColor(panel)}
+  header.addView(txt("◢ MOTO LAB ID",20f,true),LinearLayout.LayoutParams(0,-2,1f))
+  header.addView(button("BeAT"){pick(bikes[1])});header.addView(button("Vario"){pick(bikes[4])})
+  root.addView(header)
+  val wide=resources.configuration.screenWidthDp>=700
+  val workspace=if(wide)row()else col()
+  val left=col().apply{setBackgroundColor(panel);setPadding(6,8,6,8)}
+  left.addView(txt("⚒ MODIFIKASI",16f,true))
+  categories.forEach{c->left.addView(button(c){category=c;renderSettings()})}
+  val middle=col().apply{setBackgroundColor(Color.rgb(70,77,88))}
+  heading=txt(bikeName,20f,true);middle.addView(heading)
+  middle.addView(txt("Satu motor • editor berbasis gambar",12f))
+  image=ImageView(this).apply{setImageResource(R.drawable.motorcycle_cutout);scaleType=ImageView.ScaleType.FIT_CENTER;setPadding(12,12,12,12)}
+  middle.addView(image,LinearLayout.LayoutParams(-1,0,1f))
+  middle.addView(txt("Ilustrasi sementara. Foto motor asli dan gambar part per layer belum disediakan.",11f))
+  val bar=row()
+  bar.addView(button("Simpan desain"){val j=JSONObject();j.put("bike",bikeName);j.put("size",size);j.put("front",front);j.put("rear",rear);j.put("body",body);j.put("exhaust",exhaust);j.put("mirror",mirror);j.put("filter",filter);j.put("accessory",accessory);j.put("tint",tint);prefs.edit().putString("design",j.toString()).apply();Toast.makeText(this,"Desain tersimpan",Toast.LENGTH_SHORT).show()})
+  bar.addView(button("Reset"){tint=Color.WHITE;body="Original";exhaust="Standar";filter="Standar";mirror="Standar";refresh()})
+  middle.addView(bar)
+  val right=col().apply{setPadding(8,6,8,6);setBackgroundColor(panel)}
+  right.addView(txt("DETAIL MODIFIKASI",17f,true))
+  settings=col();right.addView(settings)
+  summary=col();right.addView(summary)
+  val pick=Spinner(this);pick.adapter=ArrayAdapter(this,android.R.layout.simple_spinner_dropdown_item,bikes);pick.setSelection(bikes.indexOf(bikeName).coerceAtLeast(0))
+  pick.onItemSelectedListener=object:android.widget.AdapterView.OnItemSelectedListener{
+    override fun onNothingSelected(parent:android.widget.AdapterView<*>?){}
+    override fun onItemSelected(p:android.widget.AdapterView<*>?,v:View?,i:Int,id:Long){pick(bikes[i])}
+  };right.addView(pick,0)
+  if(wide){
+   val density=resources.displayMetrics.density
+   workspace.addView(ScrollView(this).apply{addView(left)},LinearLayout.LayoutParams((190*density).toInt(),-1))
+   workspace.addView(middle,LinearLayout.LayoutParams(0,-1,1f))
+   workspace.addView(ScrollView(this).apply{addView(right)},LinearLayout.LayoutParams((280*density).toInt(),-1))
+   root.addView(workspace,LinearLayout.LayoutParams(-1,0,1f))
+  }else{
+   workspace.addView(middle,LinearLayout.LayoutParams(-1,(350*resources.displayMetrics.density).toInt()))
+   workspace.addView(right);workspace.addView(left)
+   root.addView(ScrollView(this).apply{addView(workspace)},LinearLayout.LayoutParams(-1,0,1f))
   }
-  if(state.model !in models)state.model=models[1]
-  val root=column().apply{setBackgroundColor(bg)}
-  val top=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL;gravity=Gravity.CENTER_VERTICAL;setBackgroundColor(panel)}
-  top.addView(text("◢ MOTO LAB ID",20f,true),LinearLayout.LayoutParams(0,-2,1f))
-  top.addView(button("BeAT"){pickModel("BeAT Street 2020")})
-  top.addView(button("Vario 125"){pickModel("Vario 125")})
-  top.addView(button("Vario 160"){pickModel("Vario 160")})
-  root.addView(top)
-  val tablet=resources.configuration.screenWidthDp>=700
-  val container=LinearLayout(this).apply{orientation=if(tablet)LinearLayout.HORIZONTAL else LinearLayout.VERTICAL}
-  val left=column().apply{setBackgroundColor(panel)}
-  left.addView(text("⚒  Modifikasi",18f,true))
-  categories.forEach { category ->
-   left.addView(button("◈  $category"){currentCategory=category;renderEditor()})
-  }
-  if(tablet)container.addView(scroll(left),LinearLayout.LayoutParams((resources.configuration.screenWidthDp*.18f*resources.displayMetrics.density).toInt(),-1))
-  val middle=column()
-  selectedLabel=text(state.model,20f,true)
-  middle.addView(selectedLabel)
-  middle.addView(text("Studio Modifikasi • geser motor untuk putar 360°",12f,false,muted))
-  bike=BikeCanvas(this);bike.config=state
-  middle.addView(bike,LinearLayout.LayoutParams(-1,0,1f))
-  val controls=LinearLayout(this).apply{orientation=LinearLayout.HORIZONTAL;gravity=Gravity.CENTER}
-  controls.addView(button("↺ 360°"){bike.angle=(bike.angle+45f)%360f;bike.invalidate()})
-  controls.addView(button("Sebelum / Sesudah"){before=!before;bike.config=if(before)Config(model=state.model) else state;bike.invalidate()})
-  controls.addView(button("Simpan Desain"){save()})
-  middle.addView(controls)
-  middle.addView(text("Model dalam build ini masih ilustrasi 2.5D, belum aset 3D resmi Honda.",11f,false,muted))
-  if(tablet)container.addView(middle,LinearLayout.LayoutParams(0,-1,1f)) else container.addView(middle,LinearLayout.LayoutParams(-1,(390*resources.displayMetrics.density).toInt()))
-  val right=column().apply{setBackgroundColor(panel);setPadding(7,7,7,7)}
-  right.addView(text("Detail Modifikasi",19f,true))
-  right.addView(text("Pilih motor",12f,false,muted))
-  right.addView(spinner(models,state.model){pickModel(it)})
-  editor=column();right.addView(editor)
-  right.addView(text("Ringkasan & biaya",16f,true))
-  details=column();right.addView(details)
-  total=text("",20f,true,blue);right.addView(total)
-  if(tablet)container.addView(scroll(right),LinearLayout.LayoutParams((resources.configuration.screenWidthDp*.29f*resources.displayMetrics.density).toInt(),-1))
-  if(!tablet){container.addView(scroll(left),LinearLayout.LayoutParams(-1,(120*resources.displayMetrics.density).toInt()));container.addView(right)}
-  root.addView(if(tablet)container else scroll(container),LinearLayout.LayoutParams(-1,0,1f))
-  setContentView(root)
-  renderEditor()
+  setContentView(root);renderSettings()
  }
- private fun pickModel(value:String) {
-  state.model=value;state.rim=if(value.contains("2019")||value.contains("2020"))14 else 12
-  state.front=if(state.rim==14)"80/90-14" else "100/90-12"
-  state.rear=if(state.rim==14)"90/90-14" else "110/90-12"
+ private fun pick(name:String){
+  if(bikeName!=name){bikeName=name;size=if(name.contains("2019")||name.contains("2020"))14 else 12;front=if(size==14)"80/90-14" else "100/90-12";rear=if(size==14)"90/90-14" else "110/90-12"}
   refresh()
  }
- private fun renderEditor() {
-  editor.removeAllViews()
-  when(currentCategory) {
-   "Warna Body"->{
-    editor.addView(text("Pilih warna cat",12f,false,muted))
-    val row=LinearLayout(this)
-    listOf(Color.WHITE,Color.BLACK,Color.RED,blue,Color.GRAY,Color.rgb(214,174,84)).forEach {clr->
-     row.addView(button("●"){state.color=clr;refresh()}.apply{setTextColor(clr)},LinearLayout.LayoutParams(0,52,1f))
-    }
-    editor.addView(row)
+ private fun renderSettings(){
+  settings.removeAllViews()
+  when(category){
+   "Warna Body"->{settings.addView(txt("Warna body",13f,true));val r=row()
+    listOf(Color.WHITE,Color.BLACK,Color.RED,blue,Color.GRAY,Color.rgb(201,154,58)).forEach{color->r.addView(button("●"){tint=color;refresh()}.apply{setTextColor(color)},LinearLayout.LayoutParams(0,54,1f))}
+    settings.addView(r)
    }
-   "Velg"->addField("Diameter velg",listOf("12","14"),state.rim.toString()){state.rim=it.toInt()}
-   "Ban"->{
-    val sizes=listOf("70/90","80/90","90/90","90/100","100/90","110/90","120/80")
-    val choices=listOf(12,14).flatMap {dia->sizes.map {"$it-$dia"}}
-    addField("Ban depan",choices,state.front){state.front=it}
-    addField("Ban belakang",choices,state.rear){state.rear=it}
-   }
-   "Knalpot"->addField("Model knalpot",listOf("Standar","Racing"),state.exhaust){state.exhaust=it}
-   "Spion"->addField("Model spion",listOf("Standar","Sport","Bar-end","Bulat","Tanpa spion"),state.mirrors){state.mirrors=it}
-   "Filter Udara"->addField("Filter udara",listOf("Standar","Muttaru Custom"),state.airFilter){state.airFilter=it}
-   "Swap Body"->addField("Ganti body",listOf("Original","BeAT Street 2019","BeAT Street 2020","BeAT Street 2026"),state.body){state.body=it}
-   "Aksesoris"->addField("Aksesori",listOf("Tanpa aksesori","Handguard","Visor","Holder HP","Bracket box","Footstep","Grip custom"),state.accessory){state.accessory=it}
-   else->editor.addView(text("Katalog part $currentCategory: dibutuhkan aset 3D dan data produk untuk penggantian realistis.",13f,false,muted))
-  }
-  refresh()
+   "Velg"->choice("Diameter velg",listOf("12","14"),size.toString()){size=it.toInt()}
+   "Ban"->{val sizes=listOf("70/90","80/90","90/90","90/100","100/90","110/90","120/80");val options=listOf(12,14).flatMap{r->sizes.map{"$it-$r"}}
+    choice("Ban depan",options,front){front=it};choice("Ban belakang",options,rear){rear=it}}
+   "Knalpot"->choice("Knalpot",listOf("Standar","Racing"),exhaust){exhaust=it}
+   "Spion"->choice("Spion",listOf("Standar","Sport","Bar-end","Bulat","Tanpa spion"),mirror){mirror=it}
+   "Filter Udara"->choice("Filter",listOf("Standar","Muttaru Custom"),filter){filter=it}
+   "Swap Body"->choice("Body",listOf("Original","BeAT Street 2019","BeAT Street 2020","BeAT Street 2026"),body){body=it}
+   "Aksesoris"->choice("Aksesori",listOf("Tanpa aksesori","Handguard","Visor","Holder HP","Bracket box","Footstep"),accessory){accessory=it}
+   "Suspensi"->choice("Suspensi",listOf("Standar","Sport","Adjustable"),suspension){suspension=it}
+   "Stiker"->choice("Stiker",listOf("Tanpa stiker","Sport","Racing"),sticker){sticker=it}
+   "Jok"->choice("Jok",listOf("Standar","Custom kulit","Carbon"),seat){seat=it}
+  };refresh()
  }
- private fun refresh() {
-  if(!::bike.isInitialized)return
-  selectedLabel.text=state.model
-  if(!before){bike.config=state;bike.invalidate()}
-  if(!::details.isInitialized)return
-  details.removeAllViews()
-  val invalid=!state.front.endsWith("-${state.rim}")||!state.rear.endsWith("-${state.rim}")
-  val caution=state.body!="Original"||state.airFilter!="Standar"||state.accessory!="Tanpa aksesori"
-  val entries=listOf("Body" to state.body,"Velg" to "${state.rim} inci","Ban depan" to state.front,"Ban belakang" to state.rear,"Knalpot" to state.exhaust,"Spion" to state.mirrors,"Filter udara" to state.airFilter,"Aksesori" to state.accessory)
-  entries.forEach { (k,v)->details.addView(text("$k  •  $v",12f)) }
-  details.addView(text(when {
-   invalid->"⛔ Tidak kompatibel: diameter ban tidak sesuai velg."
-   caution->"⚠ Perlu cek bengkel: ukuran dudukan dan kompatibilitas fisik belum diverifikasi."
-   else->"✓ Diameter ban dan velg sesuai. Tetap cek lebar dan clearance."
-  },12f,true,if(invalid)Color.rgb(255,118,135) else if(caution)Color.rgb(255,204,112) else Color.rgb(121,223,181)))
-  val estimate=(if(state.exhaust=="Racing")1350000 else 0)+(if(state.airFilter!="Standar")350000 else 0)+(if(state.body!="Original")1250000 else 0)
-  total.text="Estimasi mulai Rp ${String.format("%,d",estimate).replace(',', '.')}"
- }
- private fun save() {
-  val json=JSONObject()
-  json.put("model",state.model);json.put("rim",state.rim);json.put("front",state.front);json.put("rear",state.rear)
-  json.put("body",state.body);json.put("mirrors",state.mirrors);json.put("airFilter",state.airFilter)
-  json.put("exhaust",state.exhaust);json.put("accessory",state.accessory);json.put("color",state.color)
-  getSharedPreferences("studio",Context.MODE_PRIVATE).edit().putString("design",json.toString()).apply()
-  Toast.makeText(this,"Desain disimpan di perangkat",Toast.LENGTH_SHORT).show()
+ private fun refresh(){
+  if(!::image.isInitialized)return
+  heading.text=bikeName
+  image.setColorFilter(tint,PorterDuff.Mode.MULTIPLY)
+  summary.removeAllViews()
+  listOf("Velg" to "$size inci","Ban depan" to front,"Ban belakang" to rear,"Body" to body,"Spion" to mirror,"Filter" to filter,"Knalpot" to exhaust,"Aksesori" to accessory,"Suspensi" to suspension,"Stiker" to sticker,"Jok" to seat).forEach{summary.addView(txt("${it.first}: ${it.second}",12f))}
+  val bad=!front.endsWith("-$size")||!rear.endsWith("-$size")
+  val caution=body!="Original"||filter!="Standar"||accessory!="Tanpa aksesori"
+  summary.addView(txt(if(bad)"TIDAK KOMPATIBEL: diameter ban dan velg berbeda." else if(caution)"PERLU CEK BENGKEL: dudukan/ukuran body dan aksesori belum diverifikasi." else "Diameter ban dan velg sesuai; lebar dan clearance perlu dicek.",12f,true))
+  summary.addView(txt("Harga: belum tersedia • penggantian part visual perlu aset foto transparan.",12f))
  }
 }
